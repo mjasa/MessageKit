@@ -44,6 +44,7 @@ open class MessageBaseCell: UICollectionViewCell {
 
     override public init(frame: CGRect) {
         super.init(frame: frame)
+        setupSubviews()
     }
 
     required public init?(coder aDecoder: NSCoder) {

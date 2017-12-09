@@ -245,12 +245,6 @@ extension MessagesViewController: UICollectionViewDataSource {
             break
         }
 
-
-
-
-
-
-
         switch message.data {
         case .attributedText, .text, .emoji:
             let detectors = displayDelegate.enabledDetectors(for: message, at: indexPath, in: messagesCollectionView)
@@ -269,11 +263,8 @@ extension MessagesViewController: UICollectionViewDataSource {
         let color = displayDelegate.backgroundColor(for: message, at: indexPath, in: messagesCollectionView)
         let style = displayDelegate.messageStyle(for: message, at: indexPath, in: messagesCollectionView)
 
-
-
         cell.configure(with: message)
         cell.configureMessageStyle(style, backgroundColor: color)
-
 
         return cell
     }

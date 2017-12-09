@@ -53,6 +53,7 @@ open class MessageCollectionViewCell: MessageBaseCell, CollectionViewReusable {
     // MARK: - Methods
 
     open override func setupSubviews() {
+        super.setupSubviews()
         contentView.addSubview(messageContainerView)
     }
 
@@ -65,7 +66,18 @@ open class MessageCollectionViewCell: MessageBaseCell, CollectionViewReusable {
         }
     }
 
+    open func configureMessageStyle(_ style: MessageStyle, backgroundColor: UIColor) {
+        messageContainerView.backgroundColor = backgroundColor
+        messageContainerView.style = style
+    }
+
+    open func configure(with message: MessageType) {
+        messageContainerView.configureVisibleViews(for: message)
+        messageContainerView.configureData(for: message)
+    }
+
     open override func handleTapGesture(_ gesture: UIGestureRecognizer) {
+        super.handleTapGesture(gesture)
         guard gesture.state == .ended else { return }
         let touchLocation = gesture.location(in: self)
         let containsTouch = messageContainerView.frame.contains(touchLocation)
@@ -76,31 +88,8 @@ open class MessageCollectionViewCell: MessageBaseCell, CollectionViewReusable {
         }
     }
 
-
     /// Handle `ContentView`'s tap gesture, return false when `ContentView` don't needs to handle gesture
     open func cellContentView(canHandle touchPoint: CGPoint) -> Bool {
         return false
-    }
-
-    open func configureMessageStyle(_ style: MessageStyle, backgroundColor: UIColor) {
-        messageContainerView.backgroundColor = backgroundColor
-        messageContainerView.style = style
-    }
-
-    open func configureDelegate(_ delegate: MessageCellDelegate?, for message: MessageType) {
-        if delegate == nil, let cellDelegate = delegate {
-            self.delegate = cellDelegate
-            switch message.data {
-            case .text, .attributedText, .emoji:
-                messageContainerView.messageLabel.delegate = delegate
-            default:
-                break
-            }
-        }
-    }
-
-    open func configure(with message: MessageType) {
-        messageContainerView.configureVisibleViews(for: message)
-        messageContainerView.configureData(for: message)
     }
 }
