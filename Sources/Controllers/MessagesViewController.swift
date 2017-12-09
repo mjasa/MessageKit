@@ -114,9 +114,7 @@ open class MessagesViewController: UIViewController {
     /// Registers all cells and supplementary views of the messagesCollectionView property.
     private func registerReusableViews() {
 
-        messagesCollectionView.register(TextMessageCell.self)
-        messagesCollectionView.register(MediaMessageCell.self)
-        messagesCollectionView.register(LocationMessageCell.self)
+        messagesCollectionView.register(MessageCollectionViewCell.self)
 
         messagesCollectionView.register(MessageFooterView.self, forSupplementaryViewOfKind: UICollectionElementKindSectionFooter)
         messagesCollectionView.register(MessageHeaderView.self, forSupplementaryViewOfKind: UICollectionElementKindSectionHeader)
@@ -222,23 +220,62 @@ extension MessagesViewController: UICollectionViewDataSource {
             fatalError("MessagesDataSource has not been set.")
         }
 
+        guard let displayDelegate = messagesCollectionView.messagesDisplayDelegate else {
+            fatalError("MessagesDisplayDelegate has not been set.")
+        }
+
         let message = messagesDataSource.messageForItem(at: indexPath, in: messagesCollectionView)
+        let cell = messagesCollectionView.dequeueReusableCell(MessageCollectionViewCell.self, for: indexPath)
+
+        // Base Cell Configuration
+        let avatar = messagesDataSource.avatar(for: message, at: indexPath, in: messagesCollectionView)
+        let topText = messagesDataSource.cellTopLabelAttributedText(for: message, at: indexPath)
+        let bottomText = messagesDataSource.cellBottomLabelAttributedText(for: message, at: indexPath)
+
+        cell.configureAvatar(avatar)
+        cell.configureAccessoryLabels(topText, bottomText)
+        cell.delegate = messagesCollectionView.messageCellDelegate
 
         switch message.data {
         case .text, .attributedText, .emoji:
-            let cell = messagesCollectionView.dequeueReusableCell(TextMessageCell.self, for: indexPath)
-            cell.configure(with: message, at: indexPath, and: messagesCollectionView)
-            return cell
-        case .photo, .video:
-    	    let cell = messagesCollectionView.dequeueReusableCell(MediaMessageCell.self, for: indexPath)
-            cell.configure(with: message, at: indexPath, and: messagesCollectionView)
-            return cell
-        case .location:
-    	    let cell = messagesCollectionView.dequeueReusableCell(LocationMessageCell.self, for: indexPath)
-            cell.configure(with: message, at: indexPath, and: messagesCollectionView)
-            return cell
+            // The messageLabelDelegate needs to be cellDelegate for these types
+            let delegate = messagesCollectionView.messageCellDelegate
+            cell.messageContainerView.messageLabel.delegate = delegate
+        default:
+            break
         }
 
+
+
+
+
+
+
+        switch message.data {
+        case .attributedText, .text, .emoji:
+            let detectors = displayDelegate.enabledDetectors(for: message, at: indexPath, in: messagesCollectionView)
+            let textColor = displayDelegate.textColor(for: message, at: indexPath, in: messagesCollectionView)
+            cell.messageContainerView.messageLabel.enabledDetectors = detectors
+            cell.messageContainerView.messageLabel.textColor = textColor
+        case .video, .photo:
+            cell.messageContainerView.configureVisibleViews(for: message)
+        case .location(let location):
+            let options = displayDelegate.snapshotOptionsForLocation(message: message, at: indexPath, in: messagesCollectionView)
+            let animationBlock = displayDelegate.animationBlockForLocation(message: message, at: indexPath, in: messagesCollectionView)
+            let pin = displayDelegate.annotationViewForLocation(message: message, at: indexPath, in: messagesCollectionView)
+            cell.messageContainerView.mediaView.configureForLocation(location, options: options, annotation: pin, animation: animationBlock)
+        }
+
+        let color = displayDelegate.backgroundColor(for: message, at: indexPath, in: messagesCollectionView)
+        let style = displayDelegate.messageStyle(for: message, at: indexPath, in: messagesCollectionView)
+
+
+
+        cell.configure(with: message)
+        cell.configureMessageStyle(style, backgroundColor: color)
+
+
+        return cell
     }
 
     open func collectionView(_ collectionView: UICollectionView, viewForSupplementaryElementOfKind kind: String, at indexPath: IndexPath) -> UICollectionReusableView {

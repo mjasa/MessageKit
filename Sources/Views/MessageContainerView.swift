@@ -26,8 +26,6 @@ import UIKit
 
 open class MessageContainerView: UIImageView {
 
-    // MARK: - Properties
-
     private let imageMask = UIImageView()
 
     open override var frame: CGRect {
@@ -77,4 +75,58 @@ open class MessageContainerView: UIImageView {
         }
     }
 
+    lazy var contentView: UIStackView = {
+        let view = UIStackView()
+        view.axis = .vertical
+        view.addArrangedSubview(messageLabel)
+        view.addArrangedSubview(mediaView)
+        return view
+    }()
+
+    let messageLabel = MessageLabel()
+    let mediaView = MediaView()
+
+    func configureData(for message: MessageType) {
+        switch message.data {
+        case .text(let text), .emoji(let text):
+            messageLabel.text = text
+        case .attributedText(let text):
+            messageLabel.attributedText = text
+        case .photo(let image):
+            mediaView.image = image
+        case .video(_, let thumbnail):
+            mediaView.image = thumbnail
+        case .location(_):
+            break
+        }
+    }
+
+    func configureVisibleViews(for messageType: MessageType) {
+        switch messageType.data {
+        case .attributedText, .text, .emoji:
+            messageLabel.isHidden = false
+            mediaView.configureVisibleViews(for: messageType)
+        case .photo, .video, .location:
+            messageLabel.isHidden = true
+            mediaView.configureVisibleViews(for: messageType)
+        }
+    }
+
+    override init(frame: CGRect) {
+        super.init(frame: frame)
+        addSubview(contentView)
+        contentView.translatesAutoresizingMaskIntoConstraints = false
+        contentView.topAnchor.constraint(equalTo: topAnchor).isActive = true
+        contentView.bottomAnchor.constraint(equalTo: bottomAnchor).isActive = true
+        contentView.leftAnchor.constraint(equalTo: leftAnchor).isActive = true
+        contentView.rightAnchor.constraint(equalTo: rightAnchor).isActive = true
+    }
+
+    convenience init() {
+        self.init(frame: .zero)
+    }
+
+    public required init?(coder aDecoder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
 }

@@ -1,18 +1,18 @@
 /*
  MIT License
- 
+
  Copyright (c) 2017 MessageKit
- 
+
  Permission is hereby granted, free of charge, to any person obtaining a copy
  of this software and associated documentation files (the "Software"), to deal
  in the Software without restriction, including without limitation the rights
  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  copies of the Software, and to permit persons to whom the Software is
  furnished to do so, subject to the following conditions:
- 
+
  The above copyright notice and this permission notice shall be included in all
  copies or substantial portions of the Software.
- 
+
  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -23,8 +23,9 @@
  */
 
 import UIKit
+import MapKit
 
-open class MessageCollectionViewCell<ContentView: UIView>: UICollectionViewCell, CollectionViewReusable {
+open class MessageCollectionViewCell: MessageBaseCell, CollectionViewReusable {
     open class func reuseIdentifier() -> String { return "messagekit.cell.base-cell" }
 
     // MARK: - Properties
@@ -35,29 +36,6 @@ open class MessageCollectionViewCell<ContentView: UIView>: UICollectionViewCell,
         messageContainerView.layer.masksToBounds = true
         return messageContainerView
     }()
-
-    open var avatarView: AvatarView = AvatarView()
-
-    open var cellTopLabel: UILabel = {
-        let label = UILabel()
-        label.numberOfLines = 0
-        return label
-    }()
-
-    open var messageContentView: ContentView = {
-        let contentView = ContentView()
-        contentView.clipsToBounds = true
-        contentView.isUserInteractionEnabled = true
-        return contentView
-    }()
-
-    open var cellBottomLabel: UILabel = {
-        let label = UILabel()
-        label.numberOfLines = 0
-        return label
-    }()
-
-    open weak var delegate: MessageCellDelegate?
 
     // MARK: - Initializer
 
@@ -74,99 +52,55 @@ open class MessageCollectionViewCell<ContentView: UIView>: UICollectionViewCell,
 
     // MARK: - Methods
 
-    internal func setupSubviews() {
-        contentView.addSubview(cellTopLabel)
+    open override func setupSubviews() {
         contentView.addSubview(messageContainerView)
-        messageContainerView.addSubview(messageContentView)
-        contentView.addSubview(avatarView)
-        contentView.addSubview(cellBottomLabel)
     }
 
     open override func apply(_ layoutAttributes: UICollectionViewLayoutAttributes) {
         super.apply(layoutAttributes)
-
-        guard let attributes = layoutAttributes as? MessagesCollectionViewLayoutAttributes else { return }
-
-        avatarView.frame = attributes.avatarFrame
-
-        messageContainerView.frame = attributes.messageContainerFrame
-        messageContentView.frame = messageContainerView.bounds
-        cellTopLabel.frame = attributes.topLabelFrame
-        cellBottomLabel.frame = attributes.bottomLabelFrame
-
+        if let attributes = layoutAttributes as? MessagesCollectionViewLayoutAttributes {
+            messageContainerView.frame = attributes.messageContainerFrame
+            messageContainerView.messageLabel.textInsets = attributes.messageLabelInsets
+            messageContainerView.messageLabel.font = attributes.messageLabelFont
+        }
     }
 
-    open override func prepareForReuse() {
-        cellTopLabel.text = nil
-        cellTopLabel.attributedText = nil
-        cellBottomLabel.text = nil
-        cellBottomLabel.attributedText = nil
-    }
-
-    open func configure(with message: MessageType, at indexPath: IndexPath, and messagesCollectionView: MessagesCollectionView) {
-
-        // Check if delegate has already been set to reduce number of assignments
-        if delegate == nil, let cellDelegate = messagesCollectionView.messageCellDelegate {
-            delegate = cellDelegate
-        }
-
-        if let displayDelegate = messagesCollectionView.messagesDisplayDelegate {
-
-            let messageColor = displayDelegate.backgroundColor(for: message, at: indexPath, in: messagesCollectionView)
-            let messageStyle = displayDelegate.messageStyle(for: message, at: indexPath, in: messagesCollectionView)
-
-            messageContainerView.backgroundColor = messageColor
-            messageContainerView.style = messageStyle
-        }
-
-        // Make sure we set all data source properties after configuring display delegate properties
-        // The MessageLabel class probably has a stateful issue
-        if let dataSource = messagesCollectionView.messagesDataSource {
-
-            let avatar = dataSource.avatar(for: message, at: indexPath, in: messagesCollectionView)
-            let topLabelText = dataSource.cellTopLabelAttributedText(for: message, at: indexPath)
-            let bottomLabelText = dataSource.cellBottomLabelAttributedText(for: message, at: indexPath)
-
-            avatarView.set(avatar: avatar)
-            cellTopLabel.attributedText = topLabelText
-            cellBottomLabel.attributedText = bottomLabelText
-        }
-
-    }
-
-    func setupGestureRecognizers() {
-        
-        let tapGesture = UITapGestureRecognizer(target: self, action: #selector(handleTapGesture(_:)))
-        contentView.addGestureRecognizer(tapGesture)
-        
-    }
-    
-    /// Handle tap gesture on contentView and its subviews like messageContainerView, cellTopLabel, cellBottomLabel, avatarView ....
-    @objc func handleTapGesture(_ gesture: UIGestureRecognizer) {
-        guard gesture.state == .ended else {
-            return
-        }
-        
+    open override func handleTapGesture(_ gesture: UIGestureRecognizer) {
+        guard gesture.state == .ended else { return }
         let touchLocation = gesture.location(in: self)
-        
-        switch true {
-        case messageContainerView.frame.contains(touchLocation) && !cellContentView(canHandle: convert(touchLocation, to: messageContentView)):
+        let containsTouch = messageContainerView.frame.contains(touchLocation)
+        let localTouch = convert(touchLocation, to: messageContainerView)
+        let canHandle = !cellContentView(canHandle: localTouch)
+        if containsTouch && canHandle {
             delegate?.didTapMessage(in: self)
-        case cellTopLabel.frame.contains(touchLocation):
-            delegate?.didTapTopLabel(in: self)
-        case cellBottomLabel.frame.contains(touchLocation):
-            delegate?.didTapBottomLabel(in: self)
-        case avatarView.frame.contains(touchLocation):
-            delegate?.didTapAvatar(in: self)
-        default:
-            break
         }
-    
     }
-    
+
+
     /// Handle `ContentView`'s tap gesture, return false when `ContentView` don't needs to handle gesture
     open func cellContentView(canHandle touchPoint: CGPoint) -> Bool {
         return false
     }
 
+    open func configureMessageStyle(_ style: MessageStyle, backgroundColor: UIColor) {
+        messageContainerView.backgroundColor = backgroundColor
+        messageContainerView.style = style
+    }
+
+    open func configureDelegate(_ delegate: MessageCellDelegate?, for message: MessageType) {
+        if delegate == nil, let cellDelegate = delegate {
+            self.delegate = cellDelegate
+            switch message.data {
+            case .text, .attributedText, .emoji:
+                messageContainerView.messageLabel.delegate = delegate
+            default:
+                break
+            }
+        }
+    }
+
+    open func configure(with message: MessageType) {
+        messageContainerView.configureVisibleViews(for: message)
+        messageContainerView.configureData(for: message)
+    }
 }

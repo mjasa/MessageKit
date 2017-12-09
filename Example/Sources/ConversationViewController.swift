@@ -309,16 +309,16 @@ extension ConversationViewController: MessagesDisplayDelegate {
         return annotationView
     }
 
-    func animationBlockForLocation(message: MessageType, at indexPath: IndexPath, in messagesCollectionView: MessagesCollectionView) -> ((UIImageView) -> Void)? {
-        return { view in
-            view.layer.transform = CATransform3DMakeScale(0, 0, 0)
-            view.alpha = 0.0
-            UIView.animate(withDuration: 0.6, delay: 0, usingSpringWithDamping: 0.9, initialSpringVelocity: 0, options: [], animations: {
-                view.layer.transform = CATransform3DIdentity
-                view.alpha = 1.0
-            }, completion: nil)
-        }
-    }
+//    func animationBlockForLocation(message: MessageType, at indexPath: IndexPath, in messagesCollectionView: MessagesCollectionView) -> ((UIImageView) -> Void)? {
+//        return { view in
+//            view.layer.transform = CATransform3DMakeScale(0, 0, 0)
+//            view.alpha = 0.0
+//            UIView.animate(withDuration: 0.6, delay: 0, usingSpringWithDamping: 0.9, initialSpringVelocity: 0, options: [], animations: {
+//                view.layer.transform = CATransform3DIdentity
+//                view.alpha = 1.0
+//            }, completion: nil)
+//        }
+//    }
 
 
 }
@@ -372,19 +372,19 @@ extension ConversationViewController: MessagesLayoutDelegate {
 
 extension ConversationViewController: MessageCellDelegate {
 
-    func didTapAvatar<T>(in cell: MessageCollectionViewCell<T>) {
+    func didTapAvatar(in cell: MessageCollectionViewCell) {
         print("Avatar tapped")
     }
 
-    func didTapMessage<T>(in cell: MessageCollectionViewCell<T>) {
+    func didTapMessage(in cell: MessageCollectionViewCell) {
         print("Message tapped")
     }
 
-    func didTapTopLabel<T>(in cell: MessageCollectionViewCell<T>) {
+    func didTapTopLabel(in cell: MessageCollectionViewCell) {
         print("Top label tapped")
     }
 
-    func didTapBottomLabel<T>(in cell: MessageCollectionViewCell<T>) {
+    func didTapBottomLabel(in cell: MessageCollectionViewCell) {
         print("Bottom label tapped")
     }
 
