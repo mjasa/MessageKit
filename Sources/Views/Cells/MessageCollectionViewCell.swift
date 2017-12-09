@@ -54,7 +54,7 @@ open class MessageCollectionViewCell: MessageBaseCell, CollectionViewReusable {
 
     open override func setupSubviews() {
         super.setupSubviews()
-        contentView.addSubview(messageContainerView)
+        messageContentView.addSubview(messageContainerView)
     }
 
     open override func apply(_ layoutAttributes: UICollectionViewLayoutAttributes) {
@@ -76,20 +76,4 @@ open class MessageCollectionViewCell: MessageBaseCell, CollectionViewReusable {
         messageContainerView.configureData(for: message)
     }
 
-    open override func handleTapGesture(_ gesture: UIGestureRecognizer) {
-        super.handleTapGesture(gesture)
-        guard gesture.state == .ended else { return }
-        let touchLocation = gesture.location(in: self)
-        let containsTouch = messageContainerView.frame.contains(touchLocation)
-        let localTouch = convert(touchLocation, to: messageContainerView)
-        let canHandle = !cellContentView(canHandle: localTouch)
-        if containsTouch && canHandle {
-            delegate?.didTapMessage(in: self)
-        }
-    }
-
-    /// Handle `ContentView`'s tap gesture, return false when `ContentView` don't needs to handle gesture
-    open func cellContentView(canHandle touchPoint: CGPoint) -> Bool {
-        return false
-    }
 }

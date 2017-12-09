@@ -293,9 +293,7 @@ extension MessagesViewController: UICollectionViewDataSource {
         default:
             fatalError("Unrecognized element of kind: \(kind)")
         }
-
     }
-    
 }
 
 // MARK: - Keyboard Handling

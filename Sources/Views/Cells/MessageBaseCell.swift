@@ -28,6 +28,8 @@ open class MessageBaseCell: UICollectionViewCell {
 
     open var avatarView = AvatarView()
 
+    open var messageContentView = UIView()
+
     open var cellTopLabel: UILabel = {
         let label = UILabel()
         label.numberOfLines = 0
@@ -52,6 +54,7 @@ open class MessageBaseCell: UICollectionViewCell {
     }
 
     open func setupSubviews() {
+        contentView.addSubview(messageContentView)
         contentView.addSubview(avatarView)
         contentView.addSubview(cellTopLabel)
         contentView.addSubview(cellBottomLabel)
@@ -97,14 +100,21 @@ open class MessageBaseCell: UICollectionViewCell {
         let touchLocation = gesture.location(in: self)
 
         switch true {
+        case messageContentView.frame.contains(touchLocation) && !cellContentView(canHandle: convert(touchLocation, to: messageContentView)):
+            delegate?.didTapMessage(in: self)
+        case avatarView.frame.contains(touchLocation):
+            delegate?.didTapAvatar(in: self)
         case cellTopLabel.frame.contains(touchLocation):
             delegate?.didTapTopLabel(in: self)
         case cellBottomLabel.frame.contains(touchLocation):
             delegate?.didTapBottomLabel(in: self)
-        case avatarView.frame.contains(touchLocation):
-            delegate?.didTapAvatar(in: self)
         default:
             break
         }
+    }
+
+    /// Handle `ContentView`'s tap gesture, return false when `ContentView` doesn't needs to handle gesture
+    open func cellContentView(canHandle touchPoint: CGPoint) -> Bool {
+        return false
     }
 }
